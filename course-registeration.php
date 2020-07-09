@@ -167,8 +167,8 @@ $entries  = GFAPI::get_entries( 3, $search_criteria );
 //print("<pre>".print_r($entries,true)."</pre>");
 if(count($entries) > $student_allowed){
   var_dump($student_allowed);
-  //add_filter( 'gform_confirmation', 'full_course_confirmation', 10, 4 );
-  //add_filter( 'gform_confirmation', 'custom_confirmation', 10, 4 );
+  
+  add_filter( 'gform_confirmation', 'custom_confirmation', 10, 4 );
 }
 else{
   var_dump('Asma is great!');
@@ -176,84 +176,58 @@ else{
 
 }
 
-/*
-function full_course_confirmation(){
-  var_dump('Asma');
-  return 'This class is full. We love you but you are on the waiting list.';
-
-}
-
 function custom_confirmation( $confirmation, $form, $entry, $ajax ) {  
-  $confirmation = '<p>A different message!</p>' ;
+  $confirmation = '<p>This class is full. We love you but you are on the waiting list.</p>' ;
   return $confirmation;
-}*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- // Register once
- add_action( 'gform_after_submission_3', 'wpse_set_submitted_cookie', 10, 2 );
- 
-function wpse_set_submitted_cookie( $entry, $form ) {
- 
-    // Set a third parameter to specify a cookie expiration time,
-    // otherwise it will last until the end of the current session.
- 
-    setcookie( 'wpse_form_submitted', 'true' );
 }
- 
-add_action( 'template_redirect', 'wpse_protect_confirmation_page' );//redirect to new page based on cookie
- 
-function wpse_protect_confirmation_page() {
-    if( is_page( 'register' ) && isset( $_COOKIE['wpse_form_submitted'] ) ) {
-        wp_redirect( home_url( '/already-registered/' ) );
-        exit();
-    }
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
