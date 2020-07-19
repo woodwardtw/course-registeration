@@ -34,9 +34,9 @@ function asma_add_content($content){
   global $post;
   $post_id = $post->ID;
   if(get_field('short_description',$post_id)){
-    $short = '<div class="short-desc"><h4>Short Description</h4>' . get_field('short_description',$post_id) . '</div>'; // get short_description
+    $short = '<div class="short-desc"><h4>Short Description</h4>' . get_field('short_description',$post_id) . '</div>'; 
   }
-  $full = asma_get_full_description($post);//get full_description
+  $full = asma_get_full_description($post);
   $hours = asma_get_houres($post);
   $start = asma_get_start_date($post);
   $end = asma_get_start_date($post);
@@ -45,16 +45,16 @@ function asma_add_content($content){
   $enrollment = asma_get_enrollment($post);
   $status = asma_get_status($post);
   $cost = asma_get_cost($post);
-  return  $full . $short . $start . $end . $hours . $instructor . $admin . $enrollment . $status . $cost . $content;
+  $schema = asma_get_schema($post);
+  $target = asma_get_target_group($post);
+  return  $full . $short . $start . $end . $hours . $instructor . $admin . $enrollment . $status . $cost  . $target . $schema . $content;
 }
 
 
-
-//if things get crowded you can break out elements into their own functions but you need to pass in the whole $post rather than just the ID
 function asma_get_full_description($post){
   $post_id = $post->ID;
   if(get_field('full_description',$post_id)){
-    $full = '<div class="full-desc"><h4>Full Description</h4>' .get_field('full_description',$post_id) . '</div>';//get full_description
+    $full = '<div class="full-desc"><h4>Full Description</h4>' .get_field('full_description',$post_id) . '</div>';
     return $full;
   }
 }
@@ -69,8 +69,8 @@ function asma_get_start_date($post){
     $end =   '<div class="end_date"><h4> End Date </h4>' . get_sub_field('end_date', $post_id) . '</div>';
     return $start . $end;
     
+    }
   }
-}
 }
 function asma_get_houres($post){
   $post_id = $post->ID;
@@ -80,6 +80,22 @@ function asma_get_houres($post){
   }
 }
 
+
+function asma_get_schema($post){
+  $post_id=$post->ID;
+  $rows = get_field('schema', $post_id);
+      if( have_rows('schema', $post_id) ) {
+        while( have_rows('schema', $post_id) ){
+          foreach ($rows as $row) {
+            the_row();
+            $schema .= '<ul class="schema"> <li>' . '<B>' . get_sub_field('title', $post_id) . '</B>' . ': ' . get_sub_field('date', $post_id) . ' ,   ' . get_sub_field('start', $post_id) . ' - ' .  get_sub_field('end', $post_id) . '</li> </ul>';
+            
+          }
+        }
+        return $schema;
+      }
+      
+}
 
 function asma_get_enrollment($post){
   $post_id=$post->ID;
@@ -101,11 +117,11 @@ function asma_get_instructor($post){
 
 
 function asma_get_admin($post){
-$post_id = $post->ID;
-if(get_field('admins', $post_id)['display_name']){
+  $post_id = $post->ID;
+  if(get_field('admins', $post_id)['display_name']){
   $admin = '<div class="admin"><h4> Admin(s) </h4>' . get_field('admins', $post_id)['display_name'] . '</div>';
   return $admin;
-}
+  }
 }
 
 
@@ -125,109 +141,97 @@ function asma_get_cost($post){
   }
 }
 
-/*function asma_get_gravity_form($post){
+function asma_get_target_group($post){
   $post_id = $post->ID;
+  if(get_field('target_group', $post_id)){
+    $target = '<div class="target"><h4> Taget Group </h4>' .get_field('target_group', $post_id) . '</div>';
+    return $target;
+  }
+}
 
-  $gform = '<div class="gravity-form"><h3> Registerera Dig! </h3>' . gravity_form(3) . '</div>';
-  return $gform;
-}*/
 
-
-// Add gravity form to post type = course.
+/*************************************/
 
 function asma_course_content($content) {
   global $post;
    if ($post->post_type === 'course' ) {
       $course_title = get_the_title($post->ID);
-      $hours = get_field('houres', $post_id);
-       $content = $content.gravity_form(3, false, false, false, array('course_title' => $course_title, 'course_hours' => $hours), true, 1, false);
+      $hours = get_field('houres', $post->ID);
+      $instructor = get_field('instructors', $post->ID);
+       $content = $content.gravity_form(3, false, false, false, array('course_title' => $course_title, 'course_hours' => $hours, 'course_instructor' => $instructor), true, 1, false);
    }
-     $student_allowed = get_field('enrollment', $post_id);
-     return $content . asma_search($course_title, $student_allowed) ;
+     $student_allowed = get_field('enrollment', $post->ID);
+     echo $content . asma_search($course_title, $student_allowed) ;
 }
 add_filter('the_content', 'asma_course_content', 1);
 
 
-
-
-
-function asma_search($course_title, $student_allowed){
+function asma_search($course_title, $students_allowed){
   $search_criteria = array(
     'status'        => 'active',
     'field_filters' => array(
         'mode' => 'any',
         array(
-            'key'   => '13',
+            'key'   => '13', //PROBABLY DIFFERENT FOR YOU
             'value' => $course_title
         )
     )
-);
-$entries  = GFAPI::get_entries( 3, $search_criteria );
+  );
+  $entries  = GFAPI::get_entries( 3, $search_criteria );
 
-//print("<pre>".print_r($entries,true)."</pre>");
-if(count($entries) > $student_allowed){
-  var_dump($student_allowed);
-  
-  add_filter( 'gform_confirmation', 'custom_confirmation', 10, 4 );
-}
-else{
-  var_dump('Asma is great!');
-}
+ // print("<pre>".print_r($entries,true)."</pre>");
+ // var_dump(count($entries));
+    if(count($entries) > $students_allowed){
+        return '<p>This class is full. We love you but you are on the waiting list.</p>';
+    }
+    else{
+       return 'Asma is great!';
+      }
 
 }
+
+add_filter( 'gform_confirmation', 'custom_confirmation', 1, 4 );
 
 function custom_confirmation( $confirmation, $form, $entry, $ajax ) {  
-  $confirmation = '<p>This class is full. We love you but you are on the waiting list.</p>' ;
+  global $post;
+  $course_title = get_the_title($post->ID);
+  var_dump($course_title);
+  $students_allowed = get_field('enrollment', $post->ID);
+  $confirmation = asma_search($course_title, $students_allowed);
   return $confirmation;
 }
 
+function asma_find_students_who_enrolled(){
+  global $post;
+  $current_user = wp_get_current_user();
+  $course_title = get_the_title($post->ID);
+  $students_allowed = get_field('enrollment', $post->ID);
+  $search_criteria = array(
+    'status'        => 'active',
+    'field_filters' => array(
+        'mode' => 'any',
+        array(
+            'key'   => '13', //PROBABLY DIFFERENT FOR YOU
+            'value' => $course_title
+        )
+    )
+  );
+  $entries  = GFAPI::get_entries( 3, $search_criteria );
+  //var_dump($entries);
+  if ( ! current_user_can( 'edit_post', $post->ID ) ) {
+      
+    return '<B> Sorry! You are not allowed to see this!</B>';
+    
+  } 
+  else{
+  echo '<h2>Student Who Enrolled:</h2>';
+  echo '<ul class="list">';
+    foreach ($entries as $key => $value) { 
+     echo '<li> <B> Name: </B>' . $value['1.3'] .' '. $value['1.6'] . '</li>';
+       
+      }
+    }
+   echo'</ul>';
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+add_filter('the_content', 'asma_find_students_who_enrolled', 1);
